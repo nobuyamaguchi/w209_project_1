@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Making a bar chart with SVG rects</title>
+		<script type="text/javascript" src="d3.v4.js"></script>
+		<style type="text/css">
+		.block {
+			font: 14px sans-serif;
+		}
+
+		.axis {
+			font: 10px sans-serif;
+		}
+
+		.axis path,
+		.axis line {
+
+			stroke: #000;
+			shape-rendering: crispEdges;
+		}
+		.chart text {
+		  fill: white;
+		  font: 10px sans-serif;
+		  text-anchor: end;
+		}
+
+			/* No style rules here yet */
+		</style>
+	</head>
+	<body>
+    <div class="outer">
+      <div class="block">
+				<h3>My Garmin Data - How did I train between two half marathons</h3>
+        <div id="chart01">
+
+        </div>
+      </div>
+    </div>
+		<script type="text/javascript">
+
+    //width and height
+		var margin = {"top": 0, "bottom": 50, "left": 50, "right":0};
+
+    var width = 1200 - margin.left - margin.right;
+    var height = 400 - margin.top - margin.bottom;
+    //var barWidth = 3;
+		//parse the date
+		var parseDate = d3.isoParse;
+
+		var x = d3.scaleBand() //scaleTime
+			.rangeRound([width, 0], .05)
+			.padding(0.1);
+//		var x = d3.scaleTime()
+//				.domain([0, width])
+
+		var y = d3.scaleLinear()
+	//		.domain([0, d3.max(data, function(d) { return d.value; })])
+			.range([height, 0]);
+
+		//set xAxis
+		var xAxis = d3.axisBottom()
+			.scale(x)
+			.tickFormat(d3.timeFormat("%m-%d")); //timeFormat(month, day)
+
+		//set yAxis
+		var yAxis = d3.axisLeft()
+			.scale(y)
+			.ticks(10);
+
+		//set svg to body
+		var svg = d3.select("body")
+			.append("svg")
+    	.attr("width", width + margin.left + margin.right)
+    	.attr("height", height + margin.top + margin.bottom)
+  		.append("g")
+    	.attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+		//load csv data and save two columns (date and distance)
+		d3.csv("Activities.csv", function(error, data) {
+
+			data.forEach(function(d) {
+				d.date = parseDate(d.Date);
+				d.value = +d.Distance;
+			});
+
+			//data.sort(d3.ascending(data.date));
+
+			//add domain to x and y (data can be available inside d3.csv)
+			x.domain(data.map(function(d) { return d.date; }));
+			y.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+/*var x = d3.scaleTime()     .domain([new Date(2000, 0, 1), new Date(2000, 0, 2)])     .range([0, 960]);*/
+
+			//show x axis
+			svg.append("g")
+				.attr("class", "x axis")
+				.attr("transform", "translate(0, " + height + ")")
+			//	.attr("transform", "translate(" + margin.left ", " + height + ")")
+				.call(xAxis.ticks(null).tickSize(0))
+				.selectAll("text")
+				.style("text-anchor", "middle");
+
+			//show y axis
+			svg.append("g")
+				.attr("class", "y axis")
+				.call(yAxis.ticks(null).tickSize(3))
+				.append("text")
+				.attr("y", 6)
+				.style("text-anchor", "middle")
+				.text("Value");
+
+			//create bar chart
+			svg.selectAll("bar")
+				.data(data).enter()
+				.append("rect")
+				.style("fill", "#007cc3") //this color is Garmin's company color
+				.attr("x", function(d) { return x(d.date); })
+				.attr("width", x.bandwidth())
+				.attr("y", function(d) { return y(d.value); })
+				.attr("height", function(d) { return height -y(d.value);});
+
+			//insert text into bar chart
+			svg.selectAll("bar")
+				.data(data).enter()
+				.append("text")
+				.attr("class", "chart")
+				.attr("x", function(d) { return x(d.date); })
+				.attr("y", function(d) { return y(d.value)+height*0.05; })
+				.attr("dx", ".55em")
+				.text(function(d) { return d3.format(".2f")(d.value);}) //format numbers
+				.style("font", "10px sans-serif")
+				.style("fill", "white")
+				.attr("text-achor", "middle");
+
+			//insert y axis label
+			svg.append("text")
+				.attr("x", -(height /2)-margin.bottom)
+				.attr("y", -margin.left/2)
+				.attr("transform", "rotate(-90)")
+				.attr("text-achor", "middle")
+				.style("font", "10px sans-serif")
+				.text("Distance(km)");
+		});
+
+
+
+		//set svg
+/*		var svg = d3.select("svg")
+			.attr("width", w)
+			.attr("height", h);
+
+		var x = d3.scaleTime()
+			.range([margin.left, w]);
+
+		//var y = d3.scaleLinear()
+		//	.range([h - margin.bottom, 0]);*/
+
+/*
+		d3.csv("Activities.csv", function(data) {
+			var data_list = [];
+
+		});
+*/
+
+//		var dateFormat = d3.time.format("%Y-%m-%d");
+		// load csv data
+/*		d3.csv("Activities.csv", function(d){
+			return {
+				date: d.Date.substr(0,10),
+				distance: Number(d.Distance), //string to number
+				time: d.Time,
+				calories: Number(d.Calories), //string to number
+    	};
+
+		},
+			function(error, data) {
+
+				var y = d3.scaleLinear()
+					.domain([0, d3.max(data, function(d) { return d.distance; })])
+					.range([0, h]);
+				console.log(d3.max(data, function(d) { return d.distance; }));
+				var chart = d3.select("#chart01")
+					.append("svg")
+					.attr("class", "chart")
+					.attr("width", barWidth * data.length)
+					.attr("height", h);
+				var bar = chart.selectAll("g")
+					.data(data)
+					.enter()
+					.append("g")
+					.attr("transform", function(d, i) {
+						console.log(h - y(data[i].distance));
+						return "translate(" + i * barWidth + "," + (h - y(data[i].distance)) + ")";
+					})
+
+				bar.append("rect")
+					.attr("height", y)
+					.attr("fill", "blue")
+					.attr("width", barWidth-1);
+
+			}
+		);*/
+
+/*
+    var y = d3.scaleLinear()
+      .domain([0, d3.max(data)])
+      .range([0, h]);
+
+    var chart = d3.selet("#chart01")
+      .append("svg")
+      .attr("class", "chart")
+      .attr("width", barWidth * data.length)
+      .attr("height", h);
+*/
+		</script>
+	</body>
+</html>
