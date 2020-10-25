@@ -18,7 +18,7 @@ I show distance, cadence, average HR and exercise hour from the data.
  - Tooltip
  
  ### Sample screen capture
- [Screen Capture](w209.png)
+ ![Screen Capture](w209.png)
  
  ### how to run this app
  ```
